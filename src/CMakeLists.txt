@@ -8,4 +8,5 @@ target_sources(main PRIVATE
 
 include_directories(../include)
 
-target_compile_features(main PRIVATE cxx_std_20)
+target_link_libraries(main PRIVATE Kokkos::kokkos)
+target_compile_features(main PRIVATE cxx_std_23)

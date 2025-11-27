@@ -3,12 +3,17 @@
 
 int main() {
 
-    Simu simu;
+    Kokkos::initialize();
 
-    simu.compute_energy();
-    // std::cout << simu.get_U() << std::endl;
-    std::cout << simu.compute_u_ij(0, 1) << std::endl;
-    std::cout << simu.dist_squared(0, 1) << std::endl;
+    {
+        Simu simu;
 
+        simu.compute_energy();
+        std::cout << simu.get_U() << std::endl;
+        std::cout << simu.compute_u_ij(0, 1) << std::endl;
+        std::cout << simu.dist_squared(0, 1) << std::endl;
+    }
+
+    Kokkos::finalize();
     return 0;
 }

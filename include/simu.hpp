@@ -2,13 +2,18 @@
 #include <cmath>
 #include <iostream>
 
+#include <Kokkos_Core.hpp>
+
 #include "utils.hpp"
+
+using array = Kokkos::View<double *, Kokkos::LayoutRight>;
+using mat = Kokkos::View<double **, Kokkos::LayoutRight>;
 
 class Simu {
     private:
-        std::vector<double> x;
-        std::vector<double> y;
-        std::vector<double> z;
+        array x = array("x", N_LOCAL);
+        array y = array("y", N_LOCAL);
+        array z = array("z", N_LOCAL);
 
         double U = 0;
 
