@@ -1,3 +1,4 @@
 *.data
+saved/
 build/
 .vscode/

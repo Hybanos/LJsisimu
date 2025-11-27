@@ -1,6 +1,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 
 #include <Kokkos_Core.hpp>
 
@@ -11,9 +12,15 @@ using mat = Kokkos::View<double **, Kokkos::LayoutRight>;
 
 class Simu {
     private:
+        size_t ticks = 0;
+
         array x = array("x", N_LOCAL);
         array y = array("y", N_LOCAL);
         array z = array("z", N_LOCAL);
+
+        array fx = array("fx", N_LOCAL);
+        array fy = array("fy", N_LOCAL);
+        array fz = array("fz", N_LOCAL);
 
         double U = 0;
 
@@ -23,9 +30,9 @@ class Simu {
 
     public:
         double dist_squared(int p1, int p2);
-        double compute_u_ij(int i, int j);
         Simu();
 
-        void compute_energy();
-        double get_U() { return U; }
+        void tick();
+        void print();
+        void save();
 };

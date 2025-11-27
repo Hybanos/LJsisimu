@@ -8,10 +8,13 @@ int main() {
     {
         Simu simu;
 
-        simu.compute_energy();
-        std::cout << simu.get_U() << std::endl;
-        std::cout << simu.compute_u_ij(0, 1) << std::endl;
-        std::cout << simu.dist_squared(0, 1) << std::endl;
+        simu.print();
+        simu.save();
+        for (int i = 0; i < 100; i++) {
+            simu.tick();
+            simu.print();
+            simu.save();
+        }
     }
 
     Kokkos::finalize();

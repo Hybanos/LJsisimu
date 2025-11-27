@@ -6,7 +6,15 @@ if [ ! -f particule.data ];then
     cd ..
 fi
 
-cmake -B build -G Ninja || exit
+if [ ! -d saved/ ]; then
+    mkdir saved
+fi
+
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON $build_tool || exit
 cmake --build build || exit
+
+export OMP_NUM_THREADS=1
+export OMP_PROC_BIND=true
+export OMP_PLACES=cores
 
 ./build/src/main

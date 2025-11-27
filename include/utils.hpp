@@ -15,5 +15,7 @@ static std::array<double, N_TOTAL * 3> load_data() {
         data[i] = ((double *)tmp)[i];
     }
 
+    delete tmp;
+
     return data;
 }
