@@ -2,6 +2,8 @@ add_executable(main)
 
 target_sources(main PRIVATE  
     main.cpp
+
+    simu.cpp
 )
 
 include_directories(../include)

@@ -1,5 +1,11 @@
 #!/usr/bin/sh
 
+if [ ! -f particule.data ];then
+    cd scripts
+    python3 binify.py
+    cd ..
+fi
+
 cmake -B build -G Ninja || exit
 cmake --build build || exit
 

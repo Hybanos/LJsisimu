@@ -1,18 +1,14 @@
 #include <iostream>
-#include <array>
-
-#include "utils.hpp"
-
-// #define N_total 1000
-#define N_local 100
+#include "simu.hpp"
 
 int main() {
 
-    std::array<double, N_TOTAL * 3> data = load_data();
+    Simu simu;
 
-    for (int i = 0; i < N_TOTAL; i++) {
-        std::cout << data[i * 3] << "  " << data[i * 3 + 1] << "  " << data[i * 3 + 2] << std::endl;
-    }
+    simu.compute_energy();
+    // std::cout << simu.get_U() << std::endl;
+    std::cout << simu.compute_u_ij(0, 1) << std::endl;
+    std::cout << simu.dist_squared(0, 1) << std::endl;
 
     return 0;
 }
