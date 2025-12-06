@@ -14,7 +14,6 @@ void Simu::tick() {
     ticks++;
 
     U = 0;
-    // for (int i = 0; i < N_LOCAL; i++) {
     Kokkos::parallel_for(
         "tick_outer",
         N_LOCAL,
@@ -23,33 +22,41 @@ void Simu::tick() {
             fx[i] = 0;
             fy[i] = 0;
             fz[i] = 0;
-            for (int j = 0; j < i; j++) {
-                if (i == j) continue;
 
-                // Potential
+            // Potential
+            for (int j = i + 1; j < N_LOCAL; j++) {
                 double r_ij_squared = dist_squared(i, j);
                 double r_r_squared = r_star_squared / r_ij_squared;
+
                 double u_ij = epsilon_star * 
                     (std::pow(r_r_squared, 6) - 2 * std::pow(r_r_squared, 3));
 
                 U += u_ij;
+            }
+            
+            // Forces
+            for (int j = 0; j < N_LOCAL; j++) {
 
-                // Forces
+                if (i == j) continue;
+
+                double r_ij_squared = dist_squared(i, j);
+                double r_r_squared = r_star_squared / r_ij_squared;
+
                 double tmp = -48 * epsilon_star * 
                     (std::pow(r_r_squared, 6) - std::pow(r_r_squared, 3));
-                fx[i] += tmp * ((x[i] - x[j]) / r_ij_squared);
-                fy[i] += tmp * ((y[i] - y[j]) / r_ij_squared);
-                fz[i] += tmp * ((z[i] - z[j]) / r_ij_squared);
-            }
+                fx[i] -= tmp * ((x[i] - x[j]) / r_ij_squared);
+                fy[i] -= tmp * ((y[i] - y[j]) / r_ij_squared);
+                fz[i] -= tmp * ((z[i] - z[j]) / r_ij_squared);
+            } 
         }
     );
     U = U * 4;
 
     // apply forces
-    for (int i = 0; i < N_TOTAL; i++) {
-        x[i] += fx[i];
-        y[i] += fy[i];
-        z[i] += fz[i];
+    for (int i = 0; i < N_LOCAL; i++) {
+        x[i] += fx[i] * timestep;
+        y[i] += fy[i] * timestep;
+        z[i] += fz[i] * timestep;
     }
 }
 
@@ -59,8 +66,16 @@ double Simu::dist_squared(int i, int j) {
 
 void Simu::print() {
     std::cout << "iter: " << ticks << ", total energy: " << U << std::endl;
-    for (int i = 0; i < 10; i++) {
+    double xx = 0, yy = 0, zz = 0;
+    for (int i = 0; i < N_LOCAL; i++) {
+        xx += fx[i];
+        yy += fy[i];
+        zz += fz[i];
+    }
+    std::cout << "f total: " << xx << ", " << yy << ", " << zz << std::endl;
+    for (int i = 0; i < std::min(5, N_LOCAL); i++) {
         std::cout << "x: " << x[i] << " y: " << y[i] << " z: " << z[i] << std::endl;
+        std::cout << "fx: " << fx[i] << " fy: " << fy[i] << " fz: " << fz[i] << std::endl;
     }
 }
 

@@ -13,6 +13,7 @@ using mat = Kokkos::View<double **, Kokkos::LayoutRight>;
 class Simu {
     private:
         size_t ticks = 0;
+        double timestep = 0.01;
 
         array x = array("x", N_LOCAL);
         array y = array("y", N_LOCAL);

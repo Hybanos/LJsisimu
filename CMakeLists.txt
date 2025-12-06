@@ -3,6 +3,8 @@ project(sisimu)
 add_compile_definitions(N_TOTAL=1000)
 add_compile_definitions(N_LOCAL=1000)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(OpenMP REQUIRED)
 
 include(FetchContent)

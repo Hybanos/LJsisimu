@@ -1,4 +1,5 @@
 *.data
+*.gif
 saved/
 build/
 .vscode/
