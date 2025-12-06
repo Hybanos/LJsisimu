@@ -21,6 +21,7 @@ fig = plt.figure()
 fig.tight_layout()
 ax = fig.add_subplot(projection="3d")
 
+
 def animate(i):
     i = i
     ax.clear()
@@ -31,8 +32,9 @@ def animate(i):
     d = ax.scatter(*pos[i].T, marker=".", color="blue")
     return d
 
+
 ani = animation.FuncAnimation(
     fig, animate, len(files)-1, interval=100
 )
-plt.show()
-# ani.save("haha.gif")
+# plt.show()
+ani.save("haha.gif")

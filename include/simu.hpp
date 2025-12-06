@@ -5,10 +5,21 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "traits/Kokkos_IterationPatternTrait.hpp"
 #include "utils.hpp"
+
+struct vec3 {
+    double x = 0;
+    double y = 0;
+    double z = 0;
+
+    vec3() {};
+    vec3(double _x, double _y, double _z) : x{_x}, y{_y}, z{_z} {};
+};
 
 using array = Kokkos::View<double *, Kokkos::LayoutRight>;
 using mat = Kokkos::View<double **, Kokkos::LayoutRight>;
+using images = Kokkos::View<vec3 ***, Kokkos::LayoutRight>;
 
 class Simu {
     private:
@@ -22,6 +33,9 @@ class Simu {
         array fx = array("fx", N_LOCAL);
         array fy = array("fy", N_LOCAL);
         array fz = array("fz", N_LOCAL);
+
+        images imgs = images("images", 3, 3, 3);
+
 
         double U = 0;
 
