@@ -24,7 +24,7 @@ using images = Kokkos::View<vec3 ***, Kokkos::LayoutRight>;
 class Simu {
     private:
         size_t ticks = 0;
-        double timestep = 0.01;
+        double timestep = 0.005;
 
         array x = array("x", N_LOCAL);
         array y = array("y", N_LOCAL);
