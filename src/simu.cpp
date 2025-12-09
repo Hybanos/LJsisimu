@@ -69,9 +69,9 @@ void Simu::tick() {
                 // Forces
                 double tmp = -48 * epsilon_star * 
                     (std::pow(r_r_squared, 6) - std::pow(r_r_squared, 3));
-                fx[i] -= tmp * ((x[i] - x[j]) / r_ij_squared);
-                fy[i] -= tmp * ((y[i] - y[j]) / r_ij_squared);
-                fz[i] -= tmp * ((z[i] - z[j]) / r_ij_squared);
+                fx[i] -= tmp * ((x_loc[i] - xj_loc) / r_ij_squared);
+                fy[i] -= tmp * ((y_loc[i] - yj_loc) / r_ij_squared);
+                fz[i] -= tmp * ((z_loc[i] - zj_loc) / r_ij_squared);
             } 
         }
     }
@@ -79,7 +79,7 @@ void Simu::tick() {
 
     // apply forces
     for (int i = 0; i < N_LOCAL; i++) {
-        x[i] += fx[i] * timestep + 0.001;
+        x[i] += fx[i] * timestep;
         y[i] += fy[i] * timestep;
         z[i] += fz[i] * timestep;
 
@@ -100,6 +100,7 @@ void Simu::tick() {
 // }
 
 void Simu::print() {
+    std::cout << "------------------------------------------------" << std::endl;
     std::cout << "iter: " << ticks << ", total energy: " << U << std::endl;
     double xx = 0, yy = 0, zz = 0;
     for (int i = 0; i < N_LOCAL; i++) {
