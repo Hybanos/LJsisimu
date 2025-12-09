@@ -4,13 +4,19 @@ Simu::Simu() {
     auto data = load_data();
 
     for (int i = 0; i < N_LOCAL; i++) {
-        x[i] = data[i * 3];
+        x[i] = data[i * 3]    ;
         y[i] = data[i * 3 + 1];
         z[i] = data[i * 3 + 2];
 
-        x_loc[i] = std::fmod(x[i] + 17, L);
-        y_loc[i] = std::fmod(y[i] + 17, L);
-        z_loc[i] = std::fmod(z[i] + 17, L);
+        x_loc[i] = std::fmod(x[i], L);
+        y_loc[i] = std::fmod(y[i], L);
+        z_loc[i] = std::fmod(z[i], L);
+        x_loc[i] += L;
+        y_loc[i] += L;
+        z_loc[i] += L;
+        x_loc[i] = std::fmod(x_loc[i], L);
+        y_loc[i] = std::fmod(y_loc[i], L);
+        z_loc[i] = std::fmod(z_loc[i], L);
     }
 
     int len = std::pow(N_SYM, 1.0/3.0);
@@ -49,9 +55,9 @@ void Simu::tick() {
                 double zj_loc = z_loc[j] + imgs[i_sym].z;
 
                 double r_ij_squared = 
-                    std::pow(x[i] - xj_loc, 2) +
-                    std::pow(y[i] - yj_loc, 2) +
-                    std::pow(z[i] - zj_loc, 2);
+                    std::pow(x_loc[i] - xj_loc, 2) +
+                    std::pow(y_loc[i] - yj_loc, 2) +
+                    std::pow(z_loc[i] - zj_loc, 2);
                 if (r_ij_squared > R_cut_squared) continue; 
 
                 double r_r_squared = r_star_squared / r_ij_squared;
@@ -73,13 +79,19 @@ void Simu::tick() {
 
     // apply forces
     for (int i = 0; i < N_LOCAL; i++) {
-        x[i] += fx[i] * timestep;
+        x[i] += fx[i] * timestep + 0.001;
         y[i] += fy[i] * timestep;
         z[i] += fz[i] * timestep;
 
         x_loc[i] = std::fmod(x[i], L);
         y_loc[i] = std::fmod(y[i], L);
         z_loc[i] = std::fmod(z[i], L);
+        x_loc[i] += L;
+        y_loc[i] += L;
+        z_loc[i] += L;
+        x_loc[i] = std::fmod(x_loc[i], L);
+        y_loc[i] = std::fmod(y_loc[i], L);
+        z_loc[i] = std::fmod(z_loc[i], L);
     }
 }
 
