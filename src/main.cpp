@@ -12,7 +12,7 @@ int main() {
         simu.save();
         for (int i = 0; i < 1000000; i++) {
             simu.tick();
-            if (i % 100 == 0) {
+            if (i % 50 == 0) {
                 simu.print();
                 simu.save();
             }
