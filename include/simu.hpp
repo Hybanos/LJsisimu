@@ -56,18 +56,22 @@ class Simu {
         // images offsets
         images imgs = images("images", N_SYM);
 
-        double U = 0;
+        double U = 0.0;
+        double T = 0.0;
+        double E_k = 0.0;
 
-        double timestep = 5.0;
-        double m = 18.0;
+        double timestep = 1.0;
+        double m = 18;
+        double T_0 = 300.0;
+        double R_const = 0.00199;
         double force_conversion_factor = 0.0001 * 4.186;
         double R_cut_squared = std::pow(10, 2);
         double r_star = 3.0;
         double r_star_squared = std::pow(r_star, 2);
         double epsilon_star = 0.2;
 
+        void compute_kinetic_temp();
     public:
-        // double dist_squared(int p1, int p2);
         Simu();
 
         void tick();

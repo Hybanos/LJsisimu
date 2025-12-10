@@ -10,7 +10,7 @@ int main() {
 
         simu.print();
         simu.save();
-        for (int i = 0; i < 1000000; i++) {
+        for (int i = 1; i < 1000000; i++) {
             simu.tick();
             if (i % 50 == 0) {
                 simu.print();

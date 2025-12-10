@@ -3,11 +3,13 @@
 Simu::Simu() {
     auto data = load_data();
 
+    std::srand(std::time({}));
     for (int i = 0; i < N_LOCAL; i++) {
         x[i] = data[i * 3]    ;
         y[i] = data[i * 3 + 1];
         z[i] = data[i * 3 + 2];
 
+        // Init local pos
         x_loc[i] = std::fmod(x[i], L);
         y_loc[i] = std::fmod(y[i], L);
         z_loc[i] = std::fmod(z[i], L);
@@ -17,8 +19,23 @@ Simu::Simu() {
         x_loc[i] = std::fmod(x_loc[i], L);
         y_loc[i] = std::fmod(y_loc[i], L);
         z_loc[i] = std::fmod(z_loc[i], L);
-    }
 
+        // init random momentums
+        px[i] = (double) (std::rand() % 100 - 50) / 1000;
+        py[i] = (double) (std::rand() % 100 - 50) / 1000;
+        pz[i] = (double) (std::rand() % 100 - 50) / 1000;
+    }
+    compute_kinetic_temp();
+    double ratio = (3 * N_LOCAL - 3) * R_const * T_0 / E_k;
+    std::cout << T << " " << ratio << std::endl;
+    for (int i = 0; i < N_LOCAL; i++) {
+        px[i] *= ratio;
+        py[i] *= ratio;
+        pz[i] *= ratio;
+    }
+    compute_kinetic_temp();
+
+    // init images coords
     int len = std::pow(N_SYM, 1.0/3.0);
     for (int i = 0; i < len; i++) {
         for (int j = 0; j < len; j++) {
@@ -26,7 +43,6 @@ Simu::Simu() {
                 int img = i * 9 + j * 3 + k;
                 int offset = len / 3;
                 imgs[img] = vec3((i-offset)*L, (j-offset)*L, (k-offset)*L);
-                vec3((i-offset)*L, (j-offset)*L, (k-offset)*L).print();
             }
         }
     }
@@ -110,15 +126,24 @@ void Simu::tick() {
         y_loc[i] = std::fmod(y_loc[i], L);
         z_loc[i] = std::fmod(z_loc[i], L);
     }
+
+    compute_kinetic_temp();
 }
 
-// double Simu::dist_squared(int i, int j) {
-//     return std::pow(x[i] - x[j], 2) + std::pow(y[i] - y[j], 2) + std::pow(z[i] - z[j], 2);
-// }
+void Simu::compute_kinetic_temp() {
+    E_k = 0.0;
+    for (int i = 0; i < N_LOCAL; i++) {
+        E_k += px[i] * px[i] + py[i] * py[i] + pz[i] * pz[i];
+    }
+    E_k /= m;
+    E_k *= 1 / (2 * force_conversion_factor);
+
+    T = 1 / ((3 * N_LOCAL - 3) * R_const) * E_k;
+}
 
 void Simu::print() {
     std::cout << "------------------------------------------------" << std::endl;
-    std::cout << "iter: " << ticks << ", total energy: " << U << std::endl;
+    std::cout << "iter: " << ticks << ", total energy: " << U << ", kinetic energy: " << E_k << ", temp: " << T <<std::endl;
     double xx = 0, yy = 0, zz = 0;
     for (int i = 0; i < N_LOCAL; i++) {
         xx += fx[i];
@@ -136,11 +161,24 @@ void Simu::save() {
     std::ofstream f; 
     f.open("saved/" + std::to_string(ticks) + ".data", std::ios::out | std::ios::binary);
 
+    double n = N_LOCAL;
+    double l = L;
+    double iter = ticks;
+
+    f.write(reinterpret_cast<const char *>(&n), sizeof(double));
+    f.write(reinterpret_cast<const char *>(&l), sizeof(double));
+
+    f.write(reinterpret_cast<const char *>(&iter), sizeof(double));
+    f.write(reinterpret_cast<const char *>(&U), sizeof(double));
+    f.write(reinterpret_cast<const char *>(&T), sizeof(double));
+    f.write(reinterpret_cast<const char *>(&E_k), sizeof(double));
+
     for (int i = 0; i < N_LOCAL; i++) {
         f.write(reinterpret_cast<const char *>(&x.data()[i]), sizeof(double));
         f.write(reinterpret_cast<const char *>(&y.data()[i]), sizeof(double));
         f.write(reinterpret_cast<const char *>(&z.data()[i]), sizeof(double));
     }
+
 
     f.close();
 }
