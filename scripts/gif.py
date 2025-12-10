@@ -40,7 +40,7 @@ ax1 = fig.add_subplot(2, 2, 1, projection="3d")
 ax2 = fig.add_subplot(2, 2, 2, projection="3d")
 ax3 = fig.add_subplot(2, 2, 3)
 ax4 = fig.add_subplot(2, 2, 4)
-fig.set_size_inches(10, 12)
+fig.set_size_inches(9, 9)
 fig.tight_layout()
 
 
@@ -48,7 +48,11 @@ def animate(i):
     fig.suptitle(f"Iteration {int(iters[i])}")
     ax1.clear()
     ax1.scatter(*pos[i].T, marker=".", color="blue")
+    ax1.set_xlim(np.min(pos[-1]), np.max(pos[-1]))
+    ax1.set_ylim(np.min(pos[-1]), np.max(pos[-1]))
+    ax1.set_zlim(np.min(pos[-1]), np.max(pos[-1]))
     ax2.clear()
+    ax2.scatter(*pos_loc[i].T, marker=".", color="blue")
     ax3.clear()
     ax3.plot(iters[1:i], U[1:i], color="tab:blue", label="LJ potential")
     ax3.legend()
@@ -56,8 +60,6 @@ def animate(i):
     ax4.plot(iters[:i], T[:i], color="tab:red", label="Temp")
     ax4.plot(iters[:i], E_k[:i], color="tab:pink", label="Kinetic E.")
     ax4.legend()
-    d = ax2.scatter(*pos_loc[i].T, marker=".", color="blue")
-    return d
 
 
 ani = animation.FuncAnimation(

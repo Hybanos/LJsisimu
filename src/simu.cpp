@@ -21,18 +21,12 @@ Simu::Simu() {
         z_loc[i] = std::fmod(z_loc[i], L);
 
         // init random momentums
-        px[i] = (double) (std::rand() % 100 - 50) / 1000;
-        py[i] = (double) (std::rand() % 100 - 50) / 1000;
-        pz[i] = (double) (std::rand() % 100 - 50) / 1000;
+        px[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
+        py[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
+        pz[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
     }
     compute_kinetic_temp();
-    double ratio = (3 * N_LOCAL - 3) * R_const * T_0 / E_k;
-    std::cout << T << " " << ratio << std::endl;
-    for (int i = 0; i < N_LOCAL; i++) {
-        px[i] *= ratio;
-        py[i] *= ratio;
-        pz[i] *= ratio;
-    }
+    normalize_momentums();
     compute_kinetic_temp();
 
     // init images coords
@@ -96,6 +90,9 @@ void Simu::tick() {
     }
     U = U * epsilon_star * 2;
 
+    double Px = 0;
+    double Py = 0;
+    double Pz = 0;
     // apply forces
     for (int i = 0; i < N_LOCAL; i++) {
         // Velocity-verlet
@@ -125,8 +122,21 @@ void Simu::tick() {
         x_loc[i] = std::fmod(x_loc[i], L);
         y_loc[i] = std::fmod(y_loc[i], L);
         z_loc[i] = std::fmod(z_loc[i], L);
+
+        Px += px[i];
+        Py += py[i];
+        Pz += pz[i];
     }
 
+    // Barycenter momentum conservation
+    for (int i = 0; i < N_TOTAL; i++) {
+        px[i] = px[i] - Px / N_TOTAL;
+        py[i] = py[i] - Py / N_TOTAL;
+        pz[i] = pz[i] - Pz / N_TOTAL;
+    }
+
+    // compute_kinetic_temp();
+    // normalize_momentums();
     compute_kinetic_temp();
 }
 
@@ -135,10 +145,19 @@ void Simu::compute_kinetic_temp() {
     for (int i = 0; i < N_LOCAL; i++) {
         E_k += px[i] * px[i] + py[i] * py[i] + pz[i] * pz[i];
     }
-    E_k /= m;
-    E_k *= 1 / (2 * force_conversion_factor);
+    E_k = std::sqrt(E_k);
+    E_k = E_k / m / (2 * force_conversion_factor);
 
-    T = 1 / ((3 * N_LOCAL - 3) * R_const) * E_k;
+    T = E_k / ((3 * N_LOCAL - 3) * R_const);
+}
+
+void Simu::normalize_momentums() {
+    double ratio = (3 * N_LOCAL - 3) * R_const * T_0 / E_k;
+    for (int i = 0; i < N_LOCAL; i++) {
+        px[i] *= ratio;
+        py[i] *= ratio;
+        pz[i] *= ratio;
+    }
 }
 
 void Simu::print() {
@@ -154,6 +173,7 @@ void Simu::print() {
     for (int i = 0; i < std::min(5, N_LOCAL); i++) {
         std::cout << "x: " << x[i] << " y: " << y[i] << " z: " << z[i] << std::endl;
         std::cout << "fx: " << fx[i] << " fy: " << fy[i] << " fz: " << fz[i] << std::endl;
+        std::cout << "px: " << px[i] << " py: " << py[i] << " pz: " << pz[i] << std::endl;
     }
 }
 

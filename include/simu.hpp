@@ -71,6 +71,7 @@ class Simu {
         double epsilon_star = 0.2;
 
         void compute_kinetic_temp();
+        void normalize_momentums();
     public:
         Simu();
 
