@@ -28,26 +28,36 @@ using images = Kokkos::View<vec3 *, Kokkos::LayoutRight>;
 class Simu {
     private:
         size_t ticks = 0;
-        double timestep = 0.01;
-        double R_cut_squared = std::pow(10, 2);
 
+        // global positions
         array x = array("x", N_LOCAL);
         array y = array("y", N_LOCAL);
         array z = array("z", N_LOCAL);
 
+        // local positions (global positions modulo'd to the center image)
         array x_loc = array("xj_loc", N_LOCAL);
         array y_loc = array("yj_loc", N_LOCAL);
         array z_loc = array("zj_loc", N_LOCAL);
 
+        // forces
         array fx = array("fx", N_LOCAL);
         array fy = array("fy", N_LOCAL);
         array fz = array("fz", N_LOCAL);
 
-        images imgs = images("images", N_SYM);
+        // momentum
+        array px = array("mx", N_LOCAL);
+        array py = array("my", N_LOCAL);
+        array pz = array("mz", N_LOCAL);
 
+        // images offsets
+        images imgs = images("images", N_SYM);
 
         double U = 0;
 
+        double timestep = 5.0;
+        double m = 18.0;
+        double force_conversion_factor = 0.0001 * 4.186;
+        double R_cut_squared = std::pow(10, 2);
         double r_star = 3.0;
         double r_star_squared = std::pow(r_star, 2);
         double epsilon_star = 0.2;

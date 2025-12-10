@@ -72,17 +72,32 @@ void Simu::tick() {
                 fx[i] -= tmp * ((x_loc[i] - xj_loc) / r_ij_squared);
                 fy[i] -= tmp * ((y_loc[i] - yj_loc) / r_ij_squared);
                 fz[i] -= tmp * ((z_loc[i] - zj_loc) / r_ij_squared);
-            } 
+            }
         }
     }
     U = U * epsilon_star * 2;
 
     // apply forces
     for (int i = 0; i < N_LOCAL; i++) {
-        x[i] += fx[i] * timestep;
-        y[i] += fy[i] * timestep;
-        z[i] += fz[i] * timestep;
+        // Velocity-verlet
+        double x_tp1 = x[i] + px[i] / m * timestep + fx[i] * timestep * timestep * 0.5 * force_conversion_factor;
+        double y_tp1 = y[i] + py[i] / m * timestep + fy[i] * timestep * timestep * 0.5 * force_conversion_factor;
+        double z_tp1 = z[i] + pz[i] / m * timestep + fz[i] * timestep * timestep * 0.5 * force_conversion_factor;
 
+        // THIS IS BUGGED IT NEEDS TO BE fx[i] + fx[ip1] NOT fx[i]*2
+        double vx_tp1 = px[i] / m + (fx[i] * 2) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
+        double vy_tp1 = py[i] / m + (fy[i] * 2) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
+        double vz_tp1 = pz[i] / m + (fz[i] * 2) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
+
+        x[i] = x_tp1;
+        y[i] = y_tp1;
+        z[i] = z_tp1;
+
+        px[i] = vx_tp1 * m;
+        py[i] = vy_tp1 * m;
+        pz[i] = vz_tp1 * m;
+
+        // mod positions in main image
         x_loc[i] = std::fmod(x[i], L);
         y_loc[i] = std::fmod(y[i], L);
         z_loc[i] = std::fmod(z[i], L);
