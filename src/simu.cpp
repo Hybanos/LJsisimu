@@ -38,6 +38,9 @@ void Simu::tick() {
     U = 0;
 
     for (int i = 0; i < N_LOCAL; i++) {
+        fx_tmp[i] = fx[i];
+        fy_tmp[i] = fy[i];
+        fz_tmp[i] = fz[i];
         fx[i] = 0;
         fy[i] = 0;
         fz[i] = 0;
@@ -84,10 +87,9 @@ void Simu::tick() {
         double y_tp1 = y[i] + py[i] / m * timestep + fy[i] * timestep * timestep * 0.5 * force_conversion_factor;
         double z_tp1 = z[i] + pz[i] / m * timestep + fz[i] * timestep * timestep * 0.5 * force_conversion_factor;
 
-        // THIS IS BUGGED IT NEEDS TO BE fx[i] + fx[ip1] NOT fx[i]*2
-        double vx_tp1 = px[i] / m + (fx[i] * 2) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
-        double vy_tp1 = py[i] / m + (fy[i] * 2) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
-        double vz_tp1 = pz[i] / m + (fz[i] * 2) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
+        double vx_tp1 = px[i] / m + (fx[i] + fx_tmp[i]) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
+        double vy_tp1 = py[i] / m + (fy[i] + fy_tmp[i]) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
+        double vz_tp1 = pz[i] / m + (fz[i] + fz_tmp[i]) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
 
         x[i] = x_tp1;
         y[i] = y_tp1;

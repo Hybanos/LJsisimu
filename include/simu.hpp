@@ -43,6 +43,10 @@ class Simu {
         array fx = array("fx", N_LOCAL);
         array fy = array("fy", N_LOCAL);
         array fz = array("fz", N_LOCAL);
+        // TMP/SUBOPTIMAL/NEEDSFIX/HELP
+        array fx_tmp = array("fx_tmp", N_LOCAL);
+        array fy_tmp = array("fy_tmp", N_LOCAL);
+        array fz_tmp = array("fz_tmp", N_LOCAL);
 
         // momentum
         array px = array("mx", N_LOCAL);
