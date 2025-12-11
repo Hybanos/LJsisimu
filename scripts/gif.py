@@ -45,6 +45,7 @@ fig.tight_layout()
 
 
 def animate(i):
+    print(f"{round(i/len(files) * 100, 2)}%   ", end="\r")
     fig.suptitle(f"Iteration {int(iters[i])}")
     ax1.clear()
     ax1.scatter(*pos[i].T, marker=".", color="blue")
@@ -65,5 +66,6 @@ def animate(i):
 ani = animation.FuncAnimation(
     fig, animate, len(files)-1, interval=100
 )
+print("done          ")
 # plt.show()
 ani.save("haha.gif")

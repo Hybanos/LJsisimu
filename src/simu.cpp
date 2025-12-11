@@ -56,6 +56,7 @@ void Simu::tick() {
         fz[i] = 0;
     }
 
+    // LJ
     for (int i_sym = 0; i_sym < N_SYM; i_sym++) {
         for (int i = 0; i < N_LOCAL; i++) {
 
@@ -90,19 +91,15 @@ void Simu::tick() {
     }
     U = U * epsilon_star * 2;
 
-    double Px = 0;
-    double Py = 0;
-    double Pz = 0;
-    // apply forces
+    // Velocity-verlet
     for (int i = 0; i < N_LOCAL; i++) {
-        // Velocity-verlet
         double x_tp1 = x[i] + px[i] / m * timestep + fx[i] * timestep * timestep * 0.5 * force_conversion_factor;
         double y_tp1 = y[i] + py[i] / m * timestep + fy[i] * timestep * timestep * 0.5 * force_conversion_factor;
         double z_tp1 = z[i] + pz[i] / m * timestep + fz[i] * timestep * timestep * 0.5 * force_conversion_factor;
 
-        double vx_tp1 = px[i] / m + (fx[i] + fx_tmp[i]) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
-        double vy_tp1 = py[i] / m + (fy[i] + fy_tmp[i]) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
-        double vz_tp1 = pz[i] / m + (fz[i] + fz_tmp[i]) * timestep * 0.5 * force_conversion_factor * force_conversion_factor;
+        double vx_tp1 = px[i] / m + (fx[i] + fx_tmp[i]) * timestep * 0.5 * force_conversion_factor;
+        double vy_tp1 = py[i] / m + (fy[i] + fy_tmp[i]) * timestep * 0.5 * force_conversion_factor;
+        double vz_tp1 = pz[i] / m + (fz[i] + fz_tmp[i]) * timestep * 0.5 * force_conversion_factor;
 
         x[i] = x_tp1;
         y[i] = y_tp1;
@@ -122,21 +119,27 @@ void Simu::tick() {
         x_loc[i] = std::fmod(x_loc[i], L);
         y_loc[i] = std::fmod(y_loc[i], L);
         z_loc[i] = std::fmod(z_loc[i], L);
+    }
 
+    // Barycenter momentum conservation
+    double Px = 0;
+    double Py = 0;
+    double Pz = 0;
+
+    for (int i = 0; i < N_LOCAL; i++) {
         Px += px[i];
         Py += py[i];
         Pz += pz[i];
     }
 
-    // Barycenter momentum conservation
     for (int i = 0; i < N_TOTAL; i++) {
         px[i] = px[i] - Px / N_TOTAL;
         py[i] = py[i] - Py / N_TOTAL;
         pz[i] = pz[i] - Pz / N_TOTAL;
     }
 
-    // compute_kinetic_temp();
-    // normalize_momentums();
+    compute_kinetic_temp();
+    normalize_momentums();
     compute_kinetic_temp();
 }
 

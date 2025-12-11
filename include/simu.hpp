@@ -60,7 +60,7 @@ class Simu {
         double T = 0.0;
         double E_k = 0.0;
 
-        double timestep = 1.0;
+        double timestep = 0.50;
         double m = 18;
         double T_0 = 300.0;
         double R_const = 0.00199;
