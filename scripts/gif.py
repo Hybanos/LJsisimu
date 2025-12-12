@@ -49,11 +49,13 @@ def animate(i):
     fig.suptitle(f"Iteration {int(iters[i])}")
     ax1.clear()
     ax1.scatter(*pos[i].T, marker=".", color="blue")
+    ax1.set_title("Global pos")
     ax1.set_xlim(np.min(pos[-1]), np.max(pos[-1]))
     ax1.set_ylim(np.min(pos[-1]), np.max(pos[-1]))
     ax1.set_zlim(np.min(pos[-1]), np.max(pos[-1]))
     ax2.clear()
     ax2.scatter(*pos_loc[i].T, marker=".", color="blue")
+    ax2.set_title("local pos")
     ax3.clear()
     ax3.plot(iters[1:i], U[1:i], color="tab:blue", label="LJ potential")
     ax3.legend()
@@ -66,6 +68,6 @@ def animate(i):
 ani = animation.FuncAnimation(
     fig, animate, len(files)-1, interval=100
 )
-print("done          ")
 # plt.show()
 ani.save("haha.gif")
+print("done          ")

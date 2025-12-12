@@ -27,7 +27,7 @@ using images = Kokkos::View<vec3 *, Kokkos::LayoutRight>;
 
 class Simu {
     private:
-        size_t ticks = 0;
+        size_t steps = 0;
 
         // global positions
         array x = array("x", N_LOCAL);
@@ -43,10 +43,6 @@ class Simu {
         array fx = array("fx", N_LOCAL);
         array fy = array("fy", N_LOCAL);
         array fz = array("fz", N_LOCAL);
-        // TMP/SUBOPTIMAL/NEEDSFIX/HELP
-        array fx_tmp = array("fx_tmp", N_LOCAL);
-        array fy_tmp = array("fy_tmp", N_LOCAL);
-        array fz_tmp = array("fz_tmp", N_LOCAL);
 
         // momentum
         array px = array("mx", N_LOCAL);
@@ -60,7 +56,7 @@ class Simu {
         double T = 0.0;
         double E_k = 0.0;
 
-        double timestep = 0.50;
+        double timestep = 1;
         double m = 18;
         double T_0 = 300.0;
         double R_const = 0.00199;
@@ -71,11 +67,14 @@ class Simu {
         double epsilon_star = 0.2;
 
         void compute_kinetic_temp();
-        void normalize_momentums();
+        void calibrate_momentums();
+        void calibrate_center_of_mass();
+        void lennard_jones();
+        void velocity_verlet();
     public:
         Simu();
 
-        void tick();
+        void step();
         void print();
         void save();
 };

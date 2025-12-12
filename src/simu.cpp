@@ -25,8 +25,12 @@ Simu::Simu() {
         py[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
         pz[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
     }
+
     compute_kinetic_temp();
-    normalize_momentums();
+    calibrate_momentums();
+    calibrate_center_of_mass();
+    compute_kinetic_temp();
+    calibrate_momentums();
     compute_kinetic_temp();
 
     // init images coords
@@ -42,15 +46,19 @@ Simu::Simu() {
     }
 }
 
-void Simu::tick() {
-    ticks++;
+void Simu::step() {
+    steps++;
+
+    lennard_jones();
+    compute_kinetic_temp();
+    velocity_verlet();
+}
+
+void Simu::lennard_jones() {
 
     U = 0;
 
     for (int i = 0; i < N_LOCAL; i++) {
-        fx_tmp[i] = fx[i];
-        fy_tmp[i] = fy[i];
-        fz_tmp[i] = fz[i];
         fx[i] = 0;
         fy[i] = 0;
         fz[i] = 0;
@@ -77,37 +85,35 @@ void Simu::tick() {
                 double r_r_squared = r_star_squared / r_ij_squared;
 
                 // Potential
-                double u_ij = std::pow(r_r_squared, 6) - 2 * std::pow(r_r_squared, 3);
-                U += u_ij;
+                if (i < j) {
+                    double u_ij = std::pow(r_r_squared, 6) - 2 * std::pow(r_r_squared, 3);
+                    U += u_ij;
+                }
 
                 // Forces
                 double tmp = -48 * epsilon_star * 
                     (std::pow(r_r_squared, 6) - std::pow(r_r_squared, 3));
-                fx[i] -= tmp * ((x_loc[i] - xj_loc) / r_ij_squared);
-                fy[i] -= tmp * ((y_loc[i] - yj_loc) / r_ij_squared);
-                fz[i] -= tmp * ((z_loc[i] - zj_loc) / r_ij_squared);
+                fx[i] += tmp * ((x_loc[i] - xj_loc) / r_ij_squared);
+                fy[i] += tmp * ((y_loc[i] - yj_loc) / r_ij_squared);
+                fz[i] += tmp * ((z_loc[i] - zj_loc) / r_ij_squared);
             }
         }
     }
     U = U * epsilon_star * 2;
+}
 
+void Simu::velocity_verlet() {
     // Velocity-verlet
     for (int i = 0; i < N_LOCAL; i++) {
-        double x_tp1 = x[i] + px[i] / m * timestep + fx[i] * timestep * timestep * 0.5 * force_conversion_factor;
-        double y_tp1 = y[i] + py[i] / m * timestep + fy[i] * timestep * timestep * 0.5 * force_conversion_factor;
-        double z_tp1 = z[i] + pz[i] / m * timestep + fz[i] * timestep * timestep * 0.5 * force_conversion_factor;
+        px[i] -= fx[i] * timestep * 0.5 * force_conversion_factor;
+        py[i] -= fy[i] * timestep * 0.5 * force_conversion_factor;
+        pz[i] -= fz[i] * timestep * 0.5 * force_conversion_factor;
+    }
 
-        double vx_tp1 = px[i] / m + (fx[i] + fx_tmp[i]) * timestep * 0.5 * force_conversion_factor;
-        double vy_tp1 = py[i] / m + (fy[i] + fy_tmp[i]) * timestep * 0.5 * force_conversion_factor;
-        double vz_tp1 = pz[i] / m + (fz[i] + fz_tmp[i]) * timestep * 0.5 * force_conversion_factor;
-
-        x[i] = x_tp1;
-        y[i] = y_tp1;
-        z[i] = z_tp1;
-
-        px[i] = vx_tp1 * m;
-        py[i] = vy_tp1 * m;
-        pz[i] = vz_tp1 * m;
+    for (int i = 0; i < N_LOCAL; i++) {
+        x[i] += (px[i] * timestep) / m;
+        y[i] += (py[i] * timestep) / m;
+        z[i] += (pz[i] * timestep) / m;
 
         // mod positions in main image
         x_loc[i] = std::fmod(x[i], L);
@@ -120,8 +126,30 @@ void Simu::tick() {
         y_loc[i] = std::fmod(y_loc[i], L);
         z_loc[i] = std::fmod(z_loc[i], L);
     }
+}
 
-    // Barycenter momentum conservation
+void Simu::compute_kinetic_temp() {
+    double sum = 0.0;
+    for (int i = 0; i < N_LOCAL; i++) {
+        sum += (px[i] * px[i] + py[i] * py[i] + pz[i] * pz[i]);
+    }
+    E_k = (1.0 / (2.0 * force_conversion_factor)) * sum;
+
+    T = 1 / ((3 * N_LOCAL - 3) * R_const) * E_k;
+}
+
+void Simu::calibrate_momentums() {
+    double ratio = (3 * N_LOCAL - 3) * R_const * T_0 / E_k;
+    // idk if this square root is physically accurate but i'm going insane without it
+    ratio = std::sqrt(ratio);
+    for (int i = 0; i < N_LOCAL; i++) {
+        px[i] *= ratio;
+        py[i] *= ratio;
+        pz[i] *= ratio;
+    }
+}
+
+void Simu::calibrate_center_of_mass() {
     double Px = 0;
     double Py = 0;
     double Pz = 0;
@@ -132,40 +160,20 @@ void Simu::tick() {
         Pz += pz[i];
     }
 
+    Px = Px / N_TOTAL;
+    Py = Py / N_TOTAL;
+    Pz = Pz / N_TOTAL;
+
     for (int i = 0; i < N_TOTAL; i++) {
-        px[i] = px[i] - Px / N_TOTAL;
-        py[i] = py[i] - Py / N_TOTAL;
-        pz[i] = pz[i] - Pz / N_TOTAL;
-    }
-
-    compute_kinetic_temp();
-    normalize_momentums();
-    compute_kinetic_temp();
-}
-
-void Simu::compute_kinetic_temp() {
-    E_k = 0.0;
-    for (int i = 0; i < N_LOCAL; i++) {
-        E_k += px[i] * px[i] + py[i] * py[i] + pz[i] * pz[i];
-    }
-    E_k = std::sqrt(E_k);
-    E_k = E_k / m / (2 * force_conversion_factor);
-
-    T = E_k / ((3 * N_LOCAL - 3) * R_const);
-}
-
-void Simu::normalize_momentums() {
-    double ratio = (3 * N_LOCAL - 3) * R_const * T_0 / E_k;
-    for (int i = 0; i < N_LOCAL; i++) {
-        px[i] *= ratio;
-        py[i] *= ratio;
-        pz[i] *= ratio;
+        px[i] -= Px;
+        py[i] -= Py;
+        pz[i] -= Pz;
     }
 }
 
 void Simu::print() {
     std::cout << "------------------------------------------------" << std::endl;
-    std::cout << "iter: " << ticks << ", total energy: " << U << ", kinetic energy: " << E_k << ", temp: " << T <<std::endl;
+    std::cout << "iter: " << steps << ", total energy: " << U + E_k << ", U: " << U << ", E_k: " << E_k << ", temp: " << T <<std::endl;
     double xx = 0, yy = 0, zz = 0;
     for (int i = 0; i < N_LOCAL; i++) {
         xx += fx[i];
@@ -182,11 +190,11 @@ void Simu::print() {
 
 void Simu::save() {
     std::ofstream f; 
-    f.open("saved/" + std::to_string(ticks) + ".data", std::ios::out | std::ios::binary);
+    f.open("saved/" + std::to_string(steps) + ".data", std::ios::out | std::ios::binary);
 
     double n = N_LOCAL;
     double l = L;
-    double iter = ticks;
+    double iter = steps;
 
     f.write(reinterpret_cast<const char *>(&n), sizeof(double));
     f.write(reinterpret_cast<const char *>(&l), sizeof(double));
