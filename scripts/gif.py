@@ -20,6 +20,7 @@ iters = np.zeros((len(files)))
 U = np.zeros((len(files)))
 T = np.zeros((len(files)))
 E_k = np.zeros((len(files)))
+center_of_mass = np.zeros((len(files), 3))
 pos = np.zeros((len(files), N, 3))
 
 for i, n in enumerate(ns):
@@ -28,7 +29,8 @@ for i, n in enumerate(ns):
     U[i] = tmp[3]
     T[i] = tmp[4]
     E_k[i] = tmp[5]
-    pos[i] =tmp[6:].reshape((N, 3))
+    center_of_mass[i] = tmp[6:9]
+    pos[i] =tmp[9:].reshape((N, 3))
 
 pos_loc = np.fmod(pos, L)
 pos_loc += L 
@@ -49,19 +51,22 @@ def animate(i):
     fig.suptitle(f"Iteration {int(iters[i])}")
     ax1.clear()
     ax1.scatter(*pos[i].T, marker=".", color="blue")
+    ax1.scatter(*center_of_mass[i], color="tab:red")
     ax1.set_title("Global pos")
     ax1.set_xlim(np.min(pos[-1]), np.max(pos[-1]))
     ax1.set_ylim(np.min(pos[-1]), np.max(pos[-1]))
     ax1.set_zlim(np.min(pos[-1]), np.max(pos[-1]))
     ax2.clear()
     ax2.scatter(*pos_loc[i].T, marker=".", color="blue")
+    ax2.scatter(*center_of_mass[i], color="tab:red")
     ax2.set_title("local pos")
     ax3.clear()
-    ax3.plot(iters[1:i], U[1:i], color="tab:blue", label="LJ potential")
+    ax3.plot(iters[1:i], U[1:i], color="tab:blue", label="Potential E.")
+    ax3.plot(iters[:i], E_k[:i], color="tab:green", label="Kinetic E.")
+    ax3.plot(iters[1:i], E_k[1:i] + U[1:i], color="tab:brown", label="Total E.")
     ax3.legend()
     ax4.clear()
     ax4.plot(iters[:i], T[:i], color="tab:red", label="Temp")
-    ax4.plot(iters[:i], E_k[:i], color="tab:pink", label="Kinetic E.")
     ax4.legend()
 
 

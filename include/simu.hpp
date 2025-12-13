@@ -39,6 +39,11 @@ class Simu {
         array y_loc = array("yj_loc", N_LOCAL);
         array z_loc = array("zj_loc", N_LOCAL);
 
+        // Center of mass position
+        double Px = 0.0;
+        double Py = 0.0;
+        double Pz = 0.0;
+
         // forces
         array fx = array("fx", N_LOCAL);
         array fy = array("fy", N_LOCAL);
@@ -67,6 +72,7 @@ class Simu {
         double epsilon_star = 0.2;
 
         void compute_kinetic_temp();
+        void compute_center_of_mass();
         void calibrate_momentums();
         void calibrate_center_of_mass();
         void lennard_jones();

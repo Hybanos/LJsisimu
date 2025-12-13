@@ -26,12 +26,9 @@ Simu::Simu() {
         pz[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
     }
 
-    compute_kinetic_temp();
     calibrate_momentums();
     calibrate_center_of_mass();
-    compute_kinetic_temp();
     calibrate_momentums();
-    compute_kinetic_temp();
 
     // init images coords
     int len = std::pow(N_SYM, 1.0/3.0);
@@ -51,6 +48,7 @@ void Simu::step() {
 
     lennard_jones();
     compute_kinetic_temp();
+    compute_center_of_mass();
     velocity_verlet();
 }
 
@@ -139,6 +137,7 @@ void Simu::compute_kinetic_temp() {
 }
 
 void Simu::calibrate_momentums() {
+    compute_kinetic_temp();
     double ratio = (3 * N_LOCAL - 3) * R_const * T_0 / E_k;
     // idk if this square root is physically accurate but i'm going insane without it
     ratio = std::sqrt(ratio);
@@ -147,12 +146,13 @@ void Simu::calibrate_momentums() {
         py[i] *= ratio;
         pz[i] *= ratio;
     }
+    compute_kinetic_temp();
 }
 
-void Simu::calibrate_center_of_mass() {
-    double Px = 0;
-    double Py = 0;
-    double Pz = 0;
+void Simu::compute_center_of_mass() {
+    Px = 0.0;
+    Py = 0.0;
+    Pz = 0.0;
 
     for (int i = 0; i < N_LOCAL; i++) {
         Px += px[i];
@@ -163,12 +163,16 @@ void Simu::calibrate_center_of_mass() {
     Px = Px / N_TOTAL;
     Py = Py / N_TOTAL;
     Pz = Pz / N_TOTAL;
+}
 
+void Simu::calibrate_center_of_mass() {
+    compute_center_of_mass();
     for (int i = 0; i < N_TOTAL; i++) {
         px[i] -= Px;
         py[i] -= Py;
         pz[i] -= Pz;
     }
+    compute_center_of_mass();
 }
 
 void Simu::print() {
@@ -203,6 +207,10 @@ void Simu::save() {
     f.write(reinterpret_cast<const char *>(&U), sizeof(double));
     f.write(reinterpret_cast<const char *>(&T), sizeof(double));
     f.write(reinterpret_cast<const char *>(&E_k), sizeof(double));
+
+    f.write(reinterpret_cast<const char *>(&Px), sizeof(double));
+    f.write(reinterpret_cast<const char *>(&Py), sizeof(double));
+    f.write(reinterpret_cast<const char *>(&Pz), sizeof(double));
 
     for (int i = 0; i < N_LOCAL; i++) {
         f.write(reinterpret_cast<const char *>(&x.data()[i]), sizeof(double));
