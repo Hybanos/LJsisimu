@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
 #include <Kokkos_Core.hpp>
 
@@ -60,6 +61,9 @@ class Simu {
         double U = 0.0;
         double T = 0.0;
         double E_k = 0.0;
+
+        // steps per second
+        double sps = 0.0;
 
         double timestep = 1;
         double m = 18;
