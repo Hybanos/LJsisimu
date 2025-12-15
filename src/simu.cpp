@@ -4,8 +4,7 @@ Simu::Simu() {
     auto data = load_data();
 
     std::srand(0);
-    Kokkos::parallel_for("init",
-        N_LOCAL,
+    Kokkos::parallel_for("init", policy,
         KOKKOS_LAMBDA(int i) {
             x[i] = data[i * 3]    ;
             y[i] = data[i * 3 + 1];
@@ -59,6 +58,7 @@ void Simu::step() {
     compute_kinetic_temp();
     compute_center_of_mass();
     velocity_verlet();
+    if ((steps % m_step) == 0) berendsen_thermostat();
 
     auto t2 = std::chrono::high_resolution_clock().now();
 
@@ -69,14 +69,12 @@ void Simu::lennard_jones() {
 
     U = 0;
 
-    // LJ
-    Kokkos::parallel_reduce("LJ", N_LOCAL,
+    Kokkos::parallel_reduce("LJ", policy,
         KOKKOS_LAMBDA(int i, double &U_loc) {
             fx[i] = 0;
             fy[i] = 0;
             fz[i] = 0;
             for (int i_sym = 0; i_sym < N_SYM; i_sym++) {
-
                 for (int j = 0; j < N_LOCAL; j++) {
                     if (i == j) continue;
 
@@ -94,10 +92,8 @@ void Simu::lennard_jones() {
                     double r_r_squared = r_star_squared / r_ij_squared;
 
                     // Potential
-                    if (i < j) {
-                        double u_ij = std::pow(r_r_squared, 6) - 2 * std::pow(r_r_squared, 3);
-                        U_loc += u_ij;
-                    }
+                    double u_ij = std::pow(r_r_squared, 6) - 2 * std::pow(r_r_squared, 3);
+                    U_loc += u_ij;
 
                     // Forces
                     double tmp = -48 * epsilon_star * 
@@ -109,12 +105,13 @@ void Simu::lennard_jones() {
             }
         }, U
     );
+
     U = U * epsilon_star * 2;
+    E_p = U;
 }
 
 void Simu::velocity_verlet() {
-    Kokkos::parallel_for("velocity_verlet",
-        N_LOCAL,
+    Kokkos::parallel_for("velocity_verlet", policy,
         KOKKOS_LAMBDA(int i) {
             px[i] -= fx[i] * timestep * 0.5 * force_conversion_factor;
             py[i] -= fy[i] * timestep * 0.5 * force_conversion_factor;
@@ -140,23 +137,22 @@ void Simu::velocity_verlet() {
 
 void Simu::compute_kinetic_temp() {
     double sum = 0.0;
-    Kokkos::parallel_reduce("compute_kinetic_temp", N_LOCAL,
+    Kokkos::parallel_reduce("compute_kinetic_temp", policy,
             KOKKOS_LAMBDA(int i, double &lsum) {
             lsum += (px[i] * px[i] + py[i] * py[i] + pz[i] * pz[i]);
         }, sum
     );
     E_k = (1.0 / (2.0 * force_conversion_factor)) * sum;
 
-    T = 1 / ((3 * N_LOCAL - 3) * R_const) * E_k;
+    T = 1 / (N_dl * R_const) * E_k;
 }
 
 void Simu::calibrate_momentums() {
     compute_kinetic_temp();
-    double ratio = (3 * N_LOCAL - 3) * R_const * T_0 / E_k;
+    double ratio = N_dl * R_const * T_0 / E_k;
     // idk if this square root is physically accurate but i'm going insane without it
     ratio = std::sqrt(ratio);
-    Kokkos::parallel_for("velocity_verlet_2",
-        N_LOCAL,
+    Kokkos::parallel_for("velocity_verlet_2", policy,
         KOKKOS_LAMBDA(int i) {
             px[i] *= ratio;
             py[i] *= ratio;
@@ -182,10 +178,19 @@ void Simu::compute_center_of_mass() {
     Pz = Pz / N_TOTAL;
 }
 
+void Simu::berendsen_thermostat() {
+    Kokkos::parallel_for("berendsen_thermostat", policy,
+        KOKKOS_LAMBDA(int i) {
+            px[i] = px[i] + gamma * (T_0 / T - 1) * px[i];
+            py[i] = py[i] + gamma * (T_0 / T - 1) * py[i];
+            pz[i] = pz[i] + gamma * (T_0 / T - 1) * pz[i];
+        }
+    );
+}
+
 void Simu::calibrate_center_of_mass() {
     compute_center_of_mass();
-    Kokkos::parallel_for("calibrate_center_of_mass",
-        N_LOCAL,
+    Kokkos::parallel_for("calibrate_center_of_mass", policy,
         KOKKOS_LAMBDA(int i) {
             px[i] -= Px;
             py[i] -= Py;
@@ -198,7 +203,7 @@ void Simu::calibrate_center_of_mass() {
 void Simu::print() {
     std::cout << "------------------------------------------------" << std::endl;
     std::cout << "iter: " << steps << ", sps: " << sps << std::endl;
-    std::cout << ", total energy: " << U + E_k << ", U: " << U << ", E_k: " << E_k << ", temp: " << T <<std::endl;
+    std::cout << ", total energy: " << E_p + E_k << ", E_p: " << E_p << ", E_k: " << E_k << ", temp: " << T <<std::endl;
     double xx = 0, yy = 0, zz = 0;
     for (int i = 0; i < N_LOCAL; i++) {
         xx += fx[i];
@@ -225,7 +230,7 @@ void Simu::save() {
     f.write(reinterpret_cast<const char *>(&l), sizeof(double));
 
     f.write(reinterpret_cast<const char *>(&iter), sizeof(double));
-    f.write(reinterpret_cast<const char *>(&U), sizeof(double));
+    f.write(reinterpret_cast<const char *>(&E_p), sizeof(double));
     f.write(reinterpret_cast<const char *>(&T), sizeof(double));
     f.write(reinterpret_cast<const char *>(&E_k), sizeof(double));
 

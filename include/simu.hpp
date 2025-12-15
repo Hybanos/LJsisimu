@@ -22,12 +22,17 @@ struct vec3 {
     void print() { std::cout << "vec3    x:" << x << " y:" << y << " z:" << z << std::endl; }
 };
 
+using schedule_policy = Kokkos::RangePolicy<Kokkos::Schedule<Kokkos::Dynamic>>;
+
 using array = Kokkos::View<double *, Kokkos::LayoutRight>;
 using mat = Kokkos::View<double **, Kokkos::LayoutRight>;
 using images = Kokkos::View<vec3 *, Kokkos::LayoutRight>;
 
 class Simu {
     private:
+        // i hate E-cores :(
+        schedule_policy policy = schedule_policy(0, N_LOCAL);
+
         size_t steps = 0;
 
         // global positions
@@ -59,13 +64,16 @@ class Simu {
         images imgs = images("images", N_SYM);
 
         double U = 0.0;
-        double T = 0.0;
+        double E_p = 0.0;
         double E_k = 0.0;
+        double T = 0.0;
 
         // steps per second
         double sps = 0.0;
 
+        int m_step = 10;
         double timestep = 1;
+        double N_dl = 3 * N_LOCAL - 3;
         double m = 18;
         double T_0 = 300.0;
         double R_const = 0.00199;
@@ -74,6 +82,7 @@ class Simu {
         double r_star = 3.0;
         double r_star_squared = std::pow(r_star, 2);
         double epsilon_star = 0.2;
+        double gamma = 0.01;
 
         void compute_kinetic_temp();
         void compute_center_of_mass();
@@ -81,6 +90,7 @@ class Simu {
         void calibrate_center_of_mass();
         void lennard_jones();
         void velocity_verlet();
+        void berendsen_thermostat();
     public:
         Simu();
 

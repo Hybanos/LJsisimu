@@ -10,9 +10,10 @@ int main() {
 
         simu.print();
         simu.save();
-        for (int i = 1; i < 100000; i++) {
+        for (int i = 1; i < 10000; i++) {
             simu.step();
-            if (i % 100 == 0) {
+            if (i < 2000 && i % 10 == 0 ||
+                i % 100 == 0) {
                 simu.print();
                 simu.save();
             }
