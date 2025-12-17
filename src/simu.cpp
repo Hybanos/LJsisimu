@@ -2,6 +2,13 @@
 
 Simu::Simu() {
     auto data = load_data();
+    f.open("out.data", std::ios::out | std::ios::binary);
+    
+    double n = N_LOCAL;
+    double l = L;
+
+    f.write(reinterpret_cast<const char *>(&n), sizeof(double));
+    f.write(reinterpret_cast<const char *>(&l), sizeof(double));
 
     std::srand(0);
     Kokkos::parallel_for("init", policy,
@@ -58,7 +65,8 @@ void Simu::step() {
     compute_kinetic_temp();
     compute_center_of_mass();
     velocity_verlet();
-    if ((steps % m_step) == 0) berendsen_thermostat();
+    if (steps % m_step == 0) berendsen_thermostat();
+    if (save_cond(steps)) save();
 
     auto t2 = std::chrono::high_resolution_clock().now();
 
@@ -109,7 +117,6 @@ void Simu::lennard_jones() {
     );
 
     U = U * epsilon_star * 2;
-    E_p = U;
 }
 
 void Simu::velocity_verlet() {
@@ -206,7 +213,7 @@ void Simu::calibrate_center_of_mass() {
 void Simu::print() {
     std::cout << "------------------------------------------------" << std::endl;
     std::cout << "iter: " << steps << ", sps: " << sps << std::endl;
-    std::cout << ", total energy: " << E_p + E_k << ", E_p: " << E_p << ", E_k: " << E_k << ", temp: " << T <<std::endl;
+    std::cout << ", total energy: " << U + E_k << ", U: " << U << ", E_k: " << E_k << ", temp: " << T <<std::endl;
     double xx = 0, yy = 0, zz = 0;
     for (int i = 0; i < N_LOCAL; i++) {
         xx += fx[i];
@@ -222,18 +229,11 @@ void Simu::print() {
 }
 
 void Simu::save() {
-    std::ofstream f; 
-    f.open("saved/" + std::to_string(steps) + ".data", std::ios::out | std::ios::binary);
 
-    double n = N_LOCAL;
-    double l = L;
     double iter = steps;
 
-    f.write(reinterpret_cast<const char *>(&n), sizeof(double));
-    f.write(reinterpret_cast<const char *>(&l), sizeof(double));
-
     f.write(reinterpret_cast<const char *>(&iter), sizeof(double));
-    f.write(reinterpret_cast<const char *>(&E_p), sizeof(double));
+    f.write(reinterpret_cast<const char *>(&U), sizeof(double));
     f.write(reinterpret_cast<const char *>(&T), sizeof(double));
     f.write(reinterpret_cast<const char *>(&E_k), sizeof(double));
 
@@ -247,6 +247,5 @@ void Simu::save() {
         f.write(reinterpret_cast<const char *>(&z.data()[i]), sizeof(double));
     }
 
-
-    f.close();
+    f.flush();
 }

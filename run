@@ -6,10 +6,6 @@ if [ ! -f particule.data ];then
     cd ..
 fi
 
-if [ ! -d saved/ ]; then
-    mkdir saved
-fi
-
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_OPENMP=ON $build_tool || exit
 cmake --build build || exit
 
@@ -17,5 +13,4 @@ export OMP_NUM_THREADS=$(lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l)
 export OMP_PROC_BIND=true
 export OMP_PLACES=cores
 
-rm -f saved/*
 ./build/src/main

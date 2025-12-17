@@ -3,34 +3,22 @@ import matplotlib.animation as animation
 import numpy as np
 import os
 
-files = os.listdir("../saved/")
-N = 0
-L = 0
+data = np.fromfile(f"../out.data")
+N = int(data[0])
+L = int(data[1])
 
-ns = []
-for filename in files:
-    ns.append(int(filename.split(".")[0]))
-ns.sort()
+# first 2 doubles are particule count and image count
+iterations = data[2:]
+# 7 doubles per iteration + position array
+n_iterations = len(data[2:]) // (7 + N * 3)
+iterations = iterations.reshape((n_iterations, 7 + N * 3))
 
-tmp = np.fromfile(f"../saved/{ns[0]}.data")
-N = int(tmp[0])
-L = int(tmp[1])
-
-iters = np.zeros((len(files)))
-U = np.zeros((len(files)))
-T = np.zeros((len(files)))
-E_k = np.zeros((len(files)))
-center_of_mass = np.zeros((len(files), 3))
-pos = np.zeros((len(files), N, 3))
-
-for i, n in enumerate(ns):
-    tmp = np.fromfile(f"../saved/{n}.data")
-    iters[i] = tmp[2]
-    U[i] = tmp[3]
-    T[i] = tmp[4]
-    E_k[i] = tmp[5]
-    center_of_mass[i] = tmp[6:9]
-    pos[i] =tmp[9:].reshape((N, 3))
+iters = iterations.T[0]
+U = iterations.T[1]
+T = iterations.T[2]
+E_k = iterations.T[3]
+center_of_mass = iterations.T[4:7].T.reshape((n_iterations, 3))
+pos = iterations.T[7:3008].T.reshape((n_iterations, N, 3))
 
 pos_loc = np.fmod(pos, L)
 pos_loc += L 
@@ -47,7 +35,7 @@ fig.tight_layout()
 
 
 def animate(i):
-    print(f"{round(i/len(files) * 100, 2)}%   ", end="\r")
+    print(f"{round(i/n_iterations * 100, 2)}%   ", end="\r")
     fig.suptitle(f"Iteration {int(iters[i])}")
     ax1.clear()
     ax1.scatter(*pos[i].T, marker=".", color="blue")
@@ -69,9 +57,8 @@ def animate(i):
     ax4.plot(iters[:i], T[:i], color="tab:red", label="Temp")
     ax4.legend()
 
-
 ani = animation.FuncAnimation(
-    fig, animate, len(files)-1, interval=100
+    fig, animate, n_iterations-1, interval=100
 )
 # plt.show()
 ani.save("haha.gif")

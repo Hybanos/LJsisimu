@@ -32,6 +32,8 @@ class Simu {
     private:
         // i hate E-cores :(
         schedule_policy policy = schedule_policy(0, N_LOCAL);
+        std::ofstream f;
+        std::function<bool(int)> save_cond = [](int i){ return true; };
 
         size_t steps = 0;
 
@@ -64,7 +66,6 @@ class Simu {
         images imgs = images("images", N_SYM);
 
         double U = 0.0;
-        double E_p = 0.0;
         double E_k = 0.0;
         double T = 0.0;
 
@@ -93,7 +94,9 @@ class Simu {
         void berendsen_thermostat();
     public:
         Simu();
+        ~Simu() { f.close(); }
 
+        void set_save_cond(std::function<bool(int)> _s) { save_cond = _s; }
         void step();
         void print();
         void save();
