@@ -13,6 +13,7 @@ int main() {
         for (int i = 1; i < 10000; i++) {
             simu.step();
             if (i < 2000 && i % 10 == 0 ||
+                i < 3000 && i % 50 == 0 ||
                 i % 100 == 0) {
                 simu.print();
                 simu.save();

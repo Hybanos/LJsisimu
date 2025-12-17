@@ -92,8 +92,10 @@ void Simu::lennard_jones() {
                     double r_r_squared = r_star_squared / r_ij_squared;
 
                     // Potential
-                    double u_ij = std::pow(r_r_squared, 6) - 2 * std::pow(r_r_squared, 3);
-                    U_loc += u_ij;
+                    if (i < j) {
+                        double u_ij = std::pow(r_r_squared, 6) - 2 * std::pow(r_r_squared, 3);
+                        U_loc += u_ij;
+                    }
 
                     // Forces
                     double tmp = -48 * epsilon_star * 
@@ -142,6 +144,7 @@ void Simu::compute_kinetic_temp() {
             lsum += (px[i] * px[i] + py[i] * py[i] + pz[i] * pz[i]);
         }, sum
     );
+    sum /= m;
     E_k = (1.0 / (2.0 * force_conversion_factor)) * sum;
 
     T = 1 / (N_dl * R_const) * E_k;
