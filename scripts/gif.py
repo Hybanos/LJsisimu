@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
-import os
+
+img_step = 6
 
 data = np.fromfile(f"../out.data")
 N = int(data[0])
@@ -31,10 +32,11 @@ ax2 = fig.add_subplot(2, 2, 2, projection="3d")
 ax3 = fig.add_subplot(2, 2, 3)
 ax4 = fig.add_subplot(2, 2, 4)
 fig.set_size_inches(9, 9)
-fig.tight_layout()
+# fig.tight_layout()
 
 
 def animate(i):
+    i = i * img_step
     print(f"{round(i/n_iterations * 100, 2)}%   ", end="\r")
     fig.suptitle(f"Iteration {int(iters[i])}")
     ax1.clear()
@@ -52,13 +54,19 @@ def animate(i):
     ax3.plot(iters[:i], U[:i], color="tab:blue", label="Potential E.")
     ax3.plot(iters[:i], E_k[:i], color="tab:green", label="Kinetic E.")
     ax3.plot(iters[:i], E_k[:i] + U[:i], color="tab:brown", label="Total E.")
+    ax3.set_ylabel("cal")
+    ax3.set_xlabel("Iter.")
+    ax3.grid()
     ax3.legend()
     ax4.clear()
     ax4.plot(iters[:i], T[:i], color="tab:red", label="Temp")
+    ax4.set_ylabel("°K")
+    ax4.set_xlabel("Iter.")
+    ax4.grid()
     ax4.legend()
 
 ani = animation.FuncAnimation(
-    fig, animate, n_iterations-1, interval=100
+    fig, animate, n_iterations // img_step, interval=100
 )
 # plt.show()
 ani.save("haha.gif")
