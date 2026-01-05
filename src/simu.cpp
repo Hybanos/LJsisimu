@@ -61,10 +61,12 @@ void Simu::step() {
 
     auto t1 = std::chrono::high_resolution_clock().now();
 
+    velocity_verlet_speed();
+    velocity_verlet_position();
     lennard_jones();
+    velocity_verlet_speed();
     compute_kinetic_temp();
     compute_center_of_mass();
-    velocity_verlet();
     if (steps % m_step == 0) berendsen_thermostat();
     if (save_cond(steps)) save();
 
@@ -119,13 +121,19 @@ void Simu::lennard_jones() {
     U = U * epsilon_star * 2;
 }
 
-void Simu::velocity_verlet() {
+void Simu::velocity_verlet_speed() {
     Kokkos::parallel_for("velocity_verlet", policy,
         KOKKOS_LAMBDA(int i) {
-            px[i] -= fx[i] * timestep * 0.5 * force_conversion_factor;
-            py[i] -= fy[i] * timestep * 0.5 * force_conversion_factor;
-            pz[i] -= fz[i] * timestep * 0.5 * force_conversion_factor;
+            px[i] -= fx[i] * timestep * 0.5 * force_conversion_factor * magic_timestep_universe_fix;
+            py[i] -= fy[i] * timestep * 0.5 * force_conversion_factor * magic_timestep_universe_fix;
+            pz[i] -= fz[i] * timestep * 0.5 * force_conversion_factor * magic_timestep_universe_fix;
+        }
+    );
+}
 
+void Simu::velocity_verlet_position() {
+    Kokkos::parallel_for("velocity_verlet", policy,
+        KOKKOS_LAMBDA(int i) {
             x[i] += (px[i] * timestep) / m;
             y[i] += (py[i] * timestep) / m;
             z[i] += (pz[i] * timestep) / m;

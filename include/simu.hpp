@@ -74,6 +74,7 @@ class Simu {
 
         int m_step = 10;
         double timestep = 1;
+        double magic_timestep_universe_fix = 0.5;
         double N_dl = 3 * N_LOCAL - 3;
         double m = 18;
         double T_0 = 300.0;
@@ -90,7 +91,8 @@ class Simu {
         void calibrate_momentums();
         void calibrate_center_of_mass();
         void lennard_jones();
-        void velocity_verlet();
+        void velocity_verlet_speed();
+        void velocity_verlet_position();
         void berendsen_thermostat();
     public:
         Simu();

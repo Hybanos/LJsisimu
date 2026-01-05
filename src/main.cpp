@@ -15,6 +15,8 @@ int main() {
             simu.step();
             if (i % 10 == 0) simu.print();
         }
+        simu.print();
+        simu.save();
     }
 
     Kokkos::finalize();
