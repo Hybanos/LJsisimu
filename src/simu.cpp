@@ -93,23 +93,26 @@ void Simu::lennard_jones() {
                     double yj_loc = y_loc[j] + imgs[i_sym].y;
                     double zj_loc = z_loc[j] + imgs[i_sym].z;
 
-                    double r_ij_squared = 
-                        std::pow(x_loc[i] - xj_loc, 2) +
-                        std::pow(y_loc[i] - yj_loc, 2) +
-                        std::pow(z_loc[i] - zj_loc, 2);
+                    double dx = x_loc[i] - xj_loc;
+                    double dy = y_loc[i] - yj_loc;
+                    double dz = z_loc[i] - zj_loc;
+
+                    double r_ij_squared = dx * dx + dy * dy + dz * dz;
                     if (r_ij_squared > R_cut_squared) continue; 
 
-                    double r_r_squared = r_star_squared / r_ij_squared;
+                    double r_r2 = r_star_squared / r_ij_squared;
+                    double r_r6 = r_r2 * r_r2 * r_r2;
+                    double r_r12 = r_r6 * r_r6;
 
                     // Potential
                     if (i < j) {
-                        double u_ij = std::pow(r_r_squared, 6) - 2 * std::pow(r_r_squared, 3);
+                        double u_ij = r_r12 - 2 * r_r6;
                         U_loc += u_ij;
                     }
 
                     // Forces
                     double tmp = -48 * epsilon_star * 
-                        (std::pow(r_r_squared, 6) - std::pow(r_r_squared, 3));
+                        (r_r12 - r_r6);
                     fx[i] += tmp * ((x_loc[i] - xj_loc) / r_ij_squared);
                     fy[i] += tmp * ((y_loc[i] - yj_loc) / r_ij_squared);
                     fz[i] += tmp * ((z_loc[i] - zj_loc) / r_ij_squared);
