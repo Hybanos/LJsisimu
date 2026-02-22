@@ -8,8 +8,6 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "utils.hpp"
-
 #define N_SYM 27
 
 struct vec3 {
@@ -85,6 +83,8 @@ class Simu {
         double r_star_squared = std::pow(r_star, 2);
         double epsilon_star = 0.2;
         double gamma = 0.01;
+
+        void load();
 
         void compute_kinetic_temp();
         void compute_center_of_mass();
