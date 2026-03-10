@@ -11,13 +11,16 @@ int main() {
 
         simu.print();
         simu.save();
-        for (int i = 1; i < 10000; i++) {
+        for (int i = 1; i <= 5000; i++) {
             simu.step();
             if (i % 10 == 0) simu.print();
         }
         simu.print();
         simu.save();
+
+        simu.print_dist();
     }
+
 
     Kokkos::finalize();
     return 0;

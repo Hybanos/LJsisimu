@@ -63,6 +63,11 @@ class Simu {
         // images offsets
         images imgs = images("images", N_SYM);
 
+        double temps_min = 200000;
+        double temps_max = 800000;
+        double temps_step = 5000;
+        std::vector<double> temps;
+
         double U = 0.0;
         double E_k = 0.0;
         double T = 0.0;
@@ -71,18 +76,20 @@ class Simu {
         double sps = 0.0;
 
         int m_step = 10;
-        double timestep = 1;
+        double timestep = 2;
         double magic_timestep_universe_fix = 0.5;
         double N_dl = 3 * N_LOCAL - 3;
         double m = 18;
         double T_0 = 300.0;
-        double R_const = 0.00199;
+        // double R_const = 0.00199;
+        double R_const = 8.31e-7;
         double force_conversion_factor = 0.0001 * 4.186;
         double R_cut_squared = std::pow(10, 2);
-        double r_star = 3.0;
+        double r_star = 2.850;
         double r_star_squared = std::pow(r_star, 2);
-        double epsilon_star = 0.2;
+        double epsilon_star = 0.53;
         double gamma = 0.01;
+        double M_rc[4];
 
         void load();
 
@@ -94,6 +101,7 @@ class Simu {
         void velocity_verlet_speed();
         void velocity_verlet_position();
         void berendsen_thermostat();
+        void avg_density_rc(double rc, double *res);
     public:
         Simu();
         ~Simu() { f.close(); }
@@ -102,4 +110,5 @@ class Simu {
         void step();
         void print();
         void save();
+        void print_dist();
 };

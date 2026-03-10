@@ -25,11 +25,15 @@ Simu::Simu() {
             z_loc[i] = std::fmod(z_loc[i], L);
 
             // init random momentums
-            px[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
-            py[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
-            pz[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
+            // px[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
+            // py[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
+            // pz[i] = ((double) std::rand() / RAND_MAX) * 2 - 1;
         }
     );
+
+    // velocity recalibration
+    compute_kinetic_temp();
+    T_0 = T;
 
     calibrate_momentums();
     calibrate_center_of_mass();
@@ -47,9 +51,17 @@ Simu::Simu() {
         }
     }
 
+    avg_density_rc(8, &M_rc[0]);
+    avg_density_rc(10, &M_rc[1]);
+    avg_density_rc(12, &M_rc[2]);
+    avg_density_rc(14, &M_rc[3]);
     lennard_jones();
     compute_kinetic_temp();
     compute_center_of_mass();
+
+    for (int i = temps_min; i < temps_max; i+= temps_step) {
+        temps.push_back(0);
+    }
 }
 
 void Simu::step() {
@@ -57,14 +69,23 @@ void Simu::step() {
 
     auto t1 = std::chrono::high_resolution_clock().now();
 
+    double a = (T - temps_min) / (temps_max - temps_min);
+    int id = a * temps.size();
+    temps[id] += 1;
+
     velocity_verlet_speed();
     velocity_verlet_position();
+    // avg_density_rc(8, &M_rc[0]);
+    // avg_density_rc(10, &M_rc[1]);
+    // avg_density_rc(12, &M_rc[2]);
+    // avg_density_rc(14, &M_rc[3]);
     lennard_jones();
     velocity_verlet_speed();
     compute_kinetic_temp();
     compute_center_of_mass();
-    if (steps % m_step == 0) berendsen_thermostat();
+    // if (steps % m_step == 0) berendsen_thermostat();
     if (save_cond(steps)) save();
+
 
     auto t2 = std::chrono::high_resolution_clock().now();
 
@@ -215,4 +236,30 @@ void Simu::calibrate_center_of_mass() {
         }
     );
     compute_center_of_mass();
+}
+
+void Simu::avg_density_rc(double rc, double *res) {
+    double total = 0;
+
+    Kokkos::parallel_reduce("LJ", policy,
+        KOKKOS_LAMBDA(int i, double &local) {
+            for (int i_sym = 0; i_sym < N_SYM; i_sym++) {
+                for (int j = 0; j < N_LOCAL; j++) {
+
+                    double xj_loc = x_loc[j] + imgs[i_sym].x;
+                    double yj_loc = y_loc[j] + imgs[i_sym].y;
+                    double zj_loc = z_loc[j] + imgs[i_sym].z;
+
+                    double dx = x_loc[i] - xj_loc;
+                    double dy = y_loc[i] - yj_loc;
+                    double dz = z_loc[i] - zj_loc;
+
+                    double dist_squared = dx * dx + dy * dy + dz * dz;
+                    if (dist_squared < (rc * rc)) local += 1;
+                }
+            }
+    }, total);
+    // -1 in order to exlude self
+    total = total / N_LOCAL - 1;
+    *res = total;
 }
